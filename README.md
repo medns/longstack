@@ -18,6 +18,7 @@ longstack.enable([options]);
 ```
 __options__:  
 * __removeNativeCode__: 是否移除非用户代码产生的堆栈， *默认值为 false*    
+* __maxAsyncDepth__: 最大异步调用栈深度， *默认值为 64*    
 
 配置全局生效，只需在用户代码入口处开启即可。
 

@@ -2,7 +2,7 @@ const path = require('path');
 const async_hooks = require('async_hooks');
 const callsite = require('callsite');
 
-let asyncTree = {}, currAsyncNode = undefined;
+let asyncTree = {}, currAsyncNode = undefined, options = null;
 
 class AsyncCallbacks {
 	constructor() {
@@ -16,6 +16,19 @@ class AsyncCallbacks {
 		const eid = async_hooks.executionAsyncId();
 		if (asyncTree.hasOwnProperty(eid)) {
 			asyncNode.parent = asyncTree[eid];
+			asyncNode.depth = asyncNode.parent.depth + 1;
+
+			if (asyncNode.depth === options.maxAsyncDepth) {
+				for (let node = asyncNode; node !== undefined; node = node.parent) {
+					node.depth -= 1;
+					if (node.depth === 0) {
+						node.parent = undefined;
+						break;
+					}
+				}
+			}
+		} else {
+			asyncNode.depth = 0;
 		}
 
 		asyncTree[asyncId] = asyncNode;
@@ -23,12 +36,14 @@ class AsyncCallbacks {
 	before(asyncId) {
 		currAsyncNode = asyncTree[asyncId];
 	}
+	promiseResolve(asyncId) {
+		delete asyncTree[asyncId];
+	}
 	destroy(asyncId) {
 		delete asyncTree[asyncId];
 	}
 }
 
-let hook = null, options = null;
 const prepareStackTrace = Error.prepareStackTrace;
 
 const kStackPrefix = '\n    at ';
@@ -63,9 +78,11 @@ const FormatStackTrace = (error, frames) => {
 	return message;
 };
 
+let hook = null;
 exports.enable = opts => {
 	options = Object.assign({
-		'removeNativeCode' : false
+		'removeNativeCode' : false,
+		'maxAsyncDepth' : 64
 	}, opts);
 
 	hook = async_hooks.createHook(new AsyncCallbacks);

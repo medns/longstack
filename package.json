@@ -1,6 +1,6 @@
 {
   "name": "longstack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main" : "hooks.js",
   "description": "LongStack 会在异常产生时自动附加前序调用堆栈，并支持过滤用户代码（模块）所产生的堆栈，帮助快速定位异步调用问题。",
   "author": {
